@@ -238,25 +238,20 @@ async function saveNovel() {
         const response = await fetch(`/api/fetch-novel?url=${encodeURIComponent(novelUrl)}`);
         const scrapedData = await response.json();
 
-        if (scrapedData.error) throw new Error(scrapedData.error);
+        console.log("Scraped Data:", scrapedData); // Check your console to see the cover!
 
-        updateStatus("Vercel found the novel: " + scrapedData.title);
-        await sleep(800);
-
-        // Save to Supabase
-        updateStatus("Almost there! Saving to Library...");
-        const { data: { user } } = await supabaseClient.auth.getUser();
-
-        const { error } = await supabaseClient
-            .from('novels')
-            .insert([{ 
-                title: scrapedData.title, 
-                novel_url: novelUrl, 
-                cover_url: scrapedData.cover, 
-                description: scrapedData.summary,
-                tags: scrapedData.tags, // Supabase handles arrays nicely
-                user_id: user.id 
-            }]);
+        if (scrapedData.cover) {
+            // Save to Supabase using the cover from Vercel
+            const { error } = await supabaseClient
+                .from('novels')
+                .insert([{ 
+                    title: scrapedData.title, 
+                    novel_url: novelUrl, 
+                    cover_url: scrapedData.cover, // This should now have the link!
+                    tags: scrapedData.tags,
+                    user_id: user.id 
+                }]);
+        }
 
         if (error) throw error;
 
