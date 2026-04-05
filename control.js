@@ -7,8 +7,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-document.getElementById('login-overlay').classList.add('hidden');
-loadUserNovels(); 
+window.loadUserNovels = loadUserNovels; // Make it globally available.
+
 
 // UI Control
 let favorites = [];
@@ -233,7 +233,7 @@ async function loadUserNovels() {
     `).join('');
 }
 
-window.loadUserNovels = loadUserNovels; // Make it globally available.
+loadUserNovels(); 
 
 
 function toggleModal(show) {
@@ -340,7 +340,15 @@ async function saveNovel() {
     }
 }
 
+async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        loadUserNovels(); // This is safe now
+    }
+}
 
+checkUser();
 
 
 
