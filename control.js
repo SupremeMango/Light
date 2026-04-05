@@ -2,6 +2,15 @@
 document.getElementById('login-overlay').classList.add('hidden');
 loadUserNovels(); 
 
+const supabaseUrl = window.location.hostname === 'localhost' 
+    ? 'http://127.0.0.1:5500/index/home%20test.html' 
+    : 'https://vpxnqmcerpsveoykztjg.supabase.co'; // Or leave blank and let Vercel handle it
+
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
+
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+
 // UI Control
 let favorites = [];
 let swiperInstance = null;
@@ -334,13 +343,7 @@ async function saveNovel() {
 
 
 // Overlay!
-const supabaseUrl = window.location.hostname === 'localhost' 
-    ? 'http://127.0.0.1:5500/index/home%20test.html' 
-    : 'https://vpxnqmcerpsveoykztjg.supabase.co'; // Or leave blank and let Vercel handle it
 
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
-
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 
 
