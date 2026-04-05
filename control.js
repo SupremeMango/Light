@@ -248,6 +248,10 @@ async function saveNovel() {
         const userId = userData.user.id; // This is the 'user' variable you were missing!
         // -------------------------
 
+        const tagsToSave = scrapedData.tags && Array.isArray(scrapedData.tags) 
+            ? scrapedData.tags 
+            : [];
+
         updateStatus("Saving to Library...");
         const { error: dbError } = await supabaseClient
             .from('novels')
@@ -256,7 +260,7 @@ async function saveNovel() {
                 novel_url: novelUrl, 
                 cover_url: scrapedData.cover, 
                 description: scrapedData.summary || "",
-                tags: scrapedData.tags || [],
+                tags: tagsToSave,
                 user_id: userId // Use the ID we just fetched
             }]);
 
