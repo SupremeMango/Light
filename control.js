@@ -226,38 +226,46 @@ function updateStatus(message, isVisible = true) {
 // Small helper to wait
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-
 async function saveNovel() {
     const novelUrl = document.getElementById('novel-url').value;
     if (!novelUrl) return;
 
     try {
         updateStatus("Talking with Vercel...");
-        
-        // Call your new API route
         const response = await fetch(`/api/fetch-novel?url=${encodeURIComponent(novelUrl)}`);
         const scrapedData = await response.json();
 
-        console.log("Scraped Data:", scrapedData); // Check your console to see the cover!
+        if (scrapedData.error) throw new Error(scrapedData.error);
 
-        if (scrapedData.cover) {
-            // Save to Supabase using the cover from Vercel
-            const { error } = await supabaseClient
-                .from('novels')
-                .insert([{ 
-                    title: scrapedData.title, 
-                    novel_url: novelUrl, 
-                    cover_url: scrapedData.cover, // This should now have the link!
-                    tags: scrapedData.tags,
-                    user_id: user.id 
-                }]);
+        // --- THE MISSING PIECE ---
+        updateStatus("Identifying User...");
+        const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+        
+        if (userError || !userData.user) {
+            throw new Error("You must be logged in to save novels!");
         }
+        
+        const userId = userData.user.id; // This is the 'user' variable you were missing!
+        // -------------------------
 
-        if (error) throw error;
+        updateStatus("Saving to Library...");
+        const { error: dbError } = await supabaseClient
+            .from('novels')
+            .insert([{ 
+                title: scrapedData.title, 
+                novel_url: novelUrl, 
+                cover_url: scrapedData.cover, 
+                description: scrapedData.summary || "",
+                tags: scrapedData.tags || [],
+                user_id: userId // Use the ID we just fetched
+            }]);
+
+        if (dbError) throw dbError;
 
         updateStatus("Success!", false);
         toggleModal(false);
-        // Refresh UI here
+        alert("Novel saved successfully!");
+
     } catch (err) {
         console.error(err);
         updateStatus("Error: " + err.message);
