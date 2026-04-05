@@ -202,7 +202,7 @@ async function loadUserNovels() {
 
     console.log("My Novels:", novels); // <--- ADD THIS
     if (error) console.error("Supabase Error:", error);
-    
+
     if (error) {
         console.error("Error fetching novels:", error);
         return;
@@ -210,7 +210,7 @@ async function loadUserNovels() {
 
     // Map your Supabase data into your exact HTML structure
     gallery.innerHTML = novels.map(novel => `
-        <div class="relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
+        <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
             data-id="${novel.id}" 
             data-link="${novel.novel_url}">
             

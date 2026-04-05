@@ -15,6 +15,20 @@
             scrollbar-width: none;
         }
 
+        /* Prevent text selection and default menus on the cards */
+        .novel-card {
+            -webkit-touch-callout: none; /* Prevents default context menu on iOS */
+            -webkit-user-select: none;    /* Prevents text selection */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Removes the grey flicker when tapping */
+            touch-action: manipulation;   /* Optimizes for panning/tapping */
+        }
+
+        /* Ensure the image doesn't get "dragged" */
+        .novel-card img {
+            pointer-events: none;
+        }
+
         .font-gog { font-family: "Google Sans", sans-serif; }
         .font-dms { font-family: "DM Sans", sans-serif; }
 
