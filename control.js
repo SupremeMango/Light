@@ -10,7 +10,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 document.getElementById('login-overlay').classList.add('hidden');
 loadUserNovels(); 
 
-
 // UI Control
 let favorites = [];
 let swiperInstance = null;
@@ -189,38 +188,6 @@ confirmBtn.onclick = () => {
 
 // ------ ------ -------- 🍀
 // Novel
-function toggleModal(show) {
-    document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
-}
-
-async function saveNovel() {
-    const url = document.getElementById('novel-url').value;
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    const { error } = await supabaseClient
-        .from('novels') // Make sure your table is named 'novels' in Supabase
-        .insert([
-            { 
-                title: title, 
-                novel_url: url, 
-                cover_url: cover, 
-                user_id: user.id 
-            }
-        ]);
-
-    if (error) {
-        alert("Error saving: " + error.message);
-    } else {
-        toggleModal(false);
-        updateStatus("Success!", false);
-        toggleModal(false);
-        loadUserNovels(); // Refresh the gallery automatically!
-    }
-}
-window.saveNovel = saveNovel;
-window.toggleModal = toggleModal;
-
 async function loadUserNovels() {
     const gallery = document.getElementById('novel-gallery');
     
@@ -267,6 +234,40 @@ async function loadUserNovels() {
 }
 
 window.loadUserNovels = loadUserNovels; // Make it globally available.
+
+
+function toggleModal(show) {
+    document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
+}
+
+async function saveNovel() {
+    const url = document.getElementById('novel-url').value;
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const { error } = await supabaseClient
+        .from('novels') // Make sure your table is named 'novels' in Supabase
+        .insert([
+            { 
+                title: title, 
+                novel_url: url, 
+                cover_url: cover, 
+                user_id: user.id 
+            }
+        ]);
+
+    if (error) {
+        alert("Error saving: " + error.message);
+    } else {
+        toggleModal(false);
+        updateStatus("Success!", false);
+        toggleModal(false);
+        loadUserNovels(); // Refresh the gallery automatically!
+    }
+}
+window.saveNovel = saveNovel;
+window.toggleModal = toggleModal;
+
 
 function updateStatus(message, isVisible = true) {
     const container = document.getElementById('status-container');
@@ -328,7 +329,9 @@ async function saveNovel() {
 
         updateStatus("Success!", false);
         toggleModal(false);
-        alert("Novel saved successfully!");
+        // alert("Novel saved successfully!");
+        loadUserNovels(); 
+
 
     } catch (err) {
         console.error(err);
