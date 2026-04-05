@@ -200,6 +200,9 @@ async function loadUserNovels() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+    console.log("My Novels:", novels); // <--- ADD THIS
+    if (error) console.error("Supabase Error:", error);
+    
     if (error) {
         console.error("Error fetching novels:", error);
         return;
