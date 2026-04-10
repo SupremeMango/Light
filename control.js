@@ -213,19 +213,20 @@ async function loadUserNovels() {
     // Map your Supabase data into your exact HTML structure
 
     // First, add finalLink to each novel
-    // novels.forEach(novel => {
-    //     novel.finalLink = (novel.last_chapter && novel.novel_hash)
-    //         ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
-    //         : novel.novel_url;
+    novels.forEach(novel => {
+        novel.finalLink = (novel.last_chapter && novel.novel_hash)
+            ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
+            : novel.novel_url;
         
-    //     novel.nvid = (novel.novel_hash)
-    // });
+        novel.nvid = (novel.novel_hash)
+    });
 
     // Then render the gallery
     gallery.innerHTML = novels.map(novel => `
         <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
             data-id="${novel.id}" 
-            data-link="${novel.finalLink}">
+            data-link="${novel.finalLink}"
+            data-uid="${novel.nvid}">
             
             <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
             

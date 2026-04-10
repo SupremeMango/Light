@@ -27,11 +27,28 @@ export default async function handler(req, res) {
         const tagMatches = [...html.matchAll(/class="tag-pill">([^<]+)<\/a>/g)];
         const tags = tagMatches.map(match => match[1].trim());
 
+        let novel_hash = "";
+        if (cover) {
+            const hashMatch = cover.match(/\/covers\/([a-f0-9]{40})\//);
+            novel_hash = hashMatch ? hashMatch[1] : ""; 
+        }
+
+        // 5. Description 
+        const descriptionMatch = html.match(/<div class="description">([\s\S]*?)<\/div>/);
+        const description = descriptionMatch 
+            ? descriptionMatch[1]
+                .replace(/<[^>]*>?/gm, '') // Remove any inner HTML tags like <br> or <span>
+                .trim()                    // Remove leading/trailing whitespace
+            : "No description available";
+
         res.status(200).json({ 
             title, 
             cover, 
             tags,
-            url 
+            url,
+            description,
+            novel_hash,
+            last_chapter,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
