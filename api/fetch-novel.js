@@ -13,8 +13,6 @@ export default async function handler(req, res) {
         });
         const html = await response.text();
 
-        console.log(html)
-
         // 1. Improved Title Search
         const titleMatch = html.match(/<h1 class="hero-title">([^<]+)<\/h1>/);
         const title = titleMatch ? titleMatch[1].trim() : "Unknown Title";
