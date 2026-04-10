@@ -9,6 +9,19 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 window.loadUserNovels = loadUserNovels; // Make it globally available.
 
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    const overlay = document.getElementById('login-overlay');
+    
+    if (session) {
+        overlay.classList.add('hidden');
+        loadUserNovels();
+    } else {
+        overlay.classList.remove('hidden');
+    }
+});
+
+checkUser();
+
 
 // UI Control
 let favorites = [];
@@ -188,110 +201,113 @@ confirmBtn.onclick = () => {
 
 // ------ ------ -------- 🍀
 // Novel
-async function loadUserNovels() {
-    const gallery = document.getElementById('novel-gallery');
-    
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
+// Animation while client works with loadUserNovel()
 
-    //fetch('/api/sync-progress').catch(err => console.error("Sync failed:", err));
-
-    const { data: novels, error } = await supabaseClient
-        .from('novels')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    console.log("My Novels:", novels); // <--- ADD THIS
-    if (error) console.error("Supabase Error:", error);
-
-    if (error) {
-        console.error("Error fetching novels:", error);
-        return;
-    }
-
-    // Map your Supabase data into your exact HTML structure
-
-    // First, add finalLink to each novel
-    novels.forEach(novel => {
-        novel.finalLink = (novel.last_chapter && novel.novel_hash)
-            ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
-            : novel.novel_url;
-        
-        novel.nvid = (novel.novel_hash)
-    });
-
-    // Then render the gallery
-    gallery.innerHTML = novels.map(novel => `
-        <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
-            data-id="${novel.id}" 
-            data-link="${novel.finalLink}"
-            data-uid="${novel.nvid}">
-            
-            <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
-            
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <h3 class="text-white text-sm sm:text-base md:text-lg font-bold font-gog">
-                    ${novel.title}
-                </h3>
-
-                <p class="text-blue-300 text-xs font-dms mt-0.5 sm:mt-1 font-bold">
-                    New Novel
-                </p>
-
-                <p class="text-gray-300 text-xs font-dms mt-1 hidden sm:block">
-                    ${novel.tags && novel.tags.length > 0 
-                        ? novel.tags.slice(0, 2).join(' • ') 
-                        : 'No Tags'}
-                </p>
+function getSkeletonHTML() {
+    // We create 8 placeholder cards that pulse
+    return Array(8).fill(0).map(() => `
+        <div class="animate-pulse relative overflow-hidden rounded-2xl bg-gray-200 aspect-[3/4]">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-300 via-transparent to-transparent p-6 flex flex-col justify-end">
+                <div class="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-300 rounded w-1/2"></div>
             </div>
-            
-            <button onclick="toggleFavorite(this)" 
-                    class="heart-btn absolute top-4 right-4 z-20 p-2.5 rounded-full bg-white/20 backdrop-blur-md text-white transition-all duration-300 hover:bg-white/40">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 pointer-events-none">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                </svg>
-            </button>
         </div>
     `).join('');
-
-    //         ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
-    //         : novel.novel_url;
-        
-    //     `
-    //     <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
-    //         data-id="${novel.id}" 
-    //         data-link="${finalLink}">
-            
-    //         <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
-            
-    //         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
-    //             <h3 class="text-white text-sm sm:text-base md:text-lg font-bold font-gog">
-    //                 ${novel.title}
-    //             </h3>
-
-    //             <p class="text-blue-300 text-xs font-dms mt-0.5 sm:mt-1 font-bold">
-    //                 New Novel
-    //             </p>
-
-    //             <p class="text-gray-300 text-xs font-dms mt-1 hidden sm:block">
-    //                 ${novel.tags && novel.tags.length > 0 
-    //                     ? novel.tags.slice(0, 2).join(' • ') 
-    //                     : 'No Tags'}
-    //             </p>
-    //         </div>
-            
-    //         <button onclick="toggleFavorite(this)" 
-    //                 class="heart-btn absolute top-4 right-4 z-20 p-2.5 rounded-full bg-white/20 backdrop-blur-md text-white transition-all duration-300 hover:bg-white/40">
-    //             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 pointer-events-none">
-    //                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-    //             </svg>
-    //         </button>
-    //     </div>
-    // `).join('');
 }
 
 
+async function loadUserNovels() {
+    const gallery = document.getElementById('novel-gallery');
+    
+    // 1. Initial State: Show Pulse Skeletons while we talk to Supabase
+    // This fills the space so the page doesn't jump.
+    gallery.innerHTML = Array(8).fill(0).map(() => `
+        <div class="animate-pulse relative overflow-hidden rounded-2xl bg-gray-200 aspect-[3/4]">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-300 via-transparent to-transparent p-6 flex flex-col justify-end">
+                <div class="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-gray-300 rounded w-1/2"></div>
+            </div>
+        </div>
+    `).join('');
+
+    try {
+        // 2. Faster session check
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const user = session?.user;
+
+        if (!user) {
+            gallery.innerHTML = '<p class="text-gray-400 p-10 text-center col-span-full">Please log in to view your library.</p>';
+            return;
+        }
+
+        // 3. Fetch Novels
+        const { data: novels, error } = await supabaseClient
+            .from('novels')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!novels || novels.length === 0) {
+            gallery.innerHTML = '<p class="text-gray-400 p-10 text-center col-span-full">No novels found in your library.</p>';
+            return;
+        }
+
+        // 4. Build the HTML String
+        const htmlContent = novels.map((novel, index) => {
+            // Logic for final link
+            const finalLink = (novel.last_chapter && novel.novel_hash)
+                ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
+                : novel.novel_url;
+
+            return `
+                <div class="novel-card animate-card-enter relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
+                    style="animation-delay: ${index * 60}ms;" 
+                    data-id="${novel.id}" 
+                    data-link="${finalLink}"
+                    data-uid="${novel.novel_hash || ''}">
+                    
+                    <img src="${novel.cover_url}" 
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <h3 class="text-white text-sm sm:text-base md:text-lg font-bold font-gog">
+                            ${novel.title}
+                        </h3>
+
+                        <p class="text-blue-300 text-xs font-dms mt-0.5 sm:mt-1 font-bold">
+                            New Novel
+                        </p>
+
+                        <p class="text-gray-300 text-xs font-dms mt-1 hidden sm:block">
+                            ${novel.tags && novel.tags.length > 0 
+                                ? novel.tags.slice(0, 2).join(' • ') 
+                                : 'No Tags'}
+                        </p>
+                    </div>
+                    
+                    <button onclick="toggleFavorite(this)" 
+                            class="heart-btn absolute top-4 right-4 z-20 p-2.5 rounded-full bg-white/20 backdrop-blur-md text-white transition-all duration-300 hover:bg-white/40">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 pointer-events-none">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // 5. Final Render: Wait for the next paint frame to avoid the "Flash"
+        requestAnimationFrame(() => {
+            gallery.innerHTML = htmlContent;
+        });
+
+    } catch (err) {
+        console.error("Gallery Load Error:", err);
+        gallery.innerHTML = '<p class="text-red-400 text-center col-span-full">Something went wrong while loading.</p>';
+    }
+}
 
 function toggleModal(show) {
     document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
@@ -417,10 +433,3 @@ async function handleLogin() {
 window.handleLogin = handleLogin;
 
 // 4. Check if already logged in
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        document.getElementById('login-overlay').classList.add('hidden');
-    }
-}
-checkUser();
