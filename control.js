@@ -217,9 +217,15 @@ async function loadUserNovels() {
             <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
             
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <h3 class="text-white text-lg font-bold font-gog">${novel.title}</h3>
-                
-                <p class="text-gray-300 text-xs font-dms mt-1">
+                <h3 class="text-white text-sm sm:text-base md:text-lg font-bold font-gog">
+                    ${novel.title}
+                </h3>
+
+                <p class="text-blue-300 text-xs font-dms mt-0.5 sm:mt-1 font-bold">
+                    New Novel
+                </p>
+
+                <p class="text-gray-300 text-xs font-dms mt-1 hidden sm:block">
                     ${novel.tags && novel.tags.length > 0 
                         ? novel.tags.slice(0, 2).join(' • ') 
                         : 'No Tags'}
