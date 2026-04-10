@@ -39,20 +39,18 @@ export default async function handler(req, res) {
         }        
 
          // 5. Extract Description
-        let description = "";
-        const descMatch = html.match(/<div class="description">\s*([\s\S]*?)<\/div>/);
-        if (descMatch) {
-            description = descMatch[1].replace(/\s+/g, ' ').trim(); // remove extra whitespace
-        }
+        // let description = "";
+        // const descMatch = html.match(/<div class="description">\s*([\s\S]*?)<\/div>/);
+        // if (descMatch) {
+        //     description = descMatch[1].replace(/\s+/g, ' ').trim(); // remove extra whitespace
+        // }
 
         res.status(200).json({ 
             title, 
             cover, 
             tags,
             url,
-            description,
             novel_hash,
-            last_chapter,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
