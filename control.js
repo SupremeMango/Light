@@ -340,9 +340,9 @@ async function saveNovel() {
             ? scrapedData.tags 
             : [];
 
-        console.log("Scraped Data:", scrapedData)
-        console.log(scrapedData.novel_hash)
-        console.log(scrapedData.description)
+        // console.log("Scraped Data:", scrapedData)
+        // console.log(scrapedData.novel_hash)
+        // console.log(scrapedData.description)
 
 
         updateStatus("Saving to Library...");
