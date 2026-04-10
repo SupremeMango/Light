@@ -341,7 +341,6 @@ async function saveNovel() {
             : [];
 
         console.log("Scraped Data:", scrapedData)
-        console.log("Userdata", userData);
 
 
         updateStatus("Saving to Library...");
@@ -351,8 +350,9 @@ async function saveNovel() {
                 title: scrapedData.title, 
                 novel_url: novelUrl, 
                 cover_url: scrapedData.cover, 
-                description: scrapedData.summary || "",
+                description: scrapedData.description || "",
                 tags: tagsToSave,
+                novel_hash: scrapedData.novel_hash,
                 user_id: userId // Use the ID we just fetched
             }]);
 
