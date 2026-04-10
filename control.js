@@ -298,6 +298,7 @@ function toggleModal(show) {
     document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
 }
 
+// Useless saveNovel(), delete later.
 // async function saveNovel() {
 //     const url = document.getElementById('novel-url').value;
 
