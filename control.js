@@ -355,6 +355,7 @@ async function saveNovel() {
         console.log("Scraped Data:", scrapedData)
         console.log("Userdata", userData);
 
+
         updateStatus("Saving to Library...");
         const { error: dbError } = await supabaseClient
             .from('novels')

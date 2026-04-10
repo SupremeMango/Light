@@ -1,5 +1,7 @@
 // This only fetches the novel. It doesn't do anything other than that.
 
+import { constants } from "node:buffer";
+
 export default async function handler(req, res) {
     const { url } = req.query;
 
@@ -36,11 +38,19 @@ export default async function handler(req, res) {
             novel_hash = match ? match[1] : null; 
         }        
 
+         // 5. Extract Description
+        let description = "";
+        const descMatch = html.match(/<div class="description">\s*([\s\S]*?)<\/div>/);
+        if (descMatch) {
+            description = descMatch[1].replace(/\s+/g, ' ').trim(); // remove extra whitespace
+        }
+
         res.status(200).json({ 
             title, 
             cover, 
             tags,
             url,
+            description,
             novel_hash,
             last_chapter,
         });
