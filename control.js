@@ -194,6 +194,8 @@ async function loadUserNovels() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
+    fetch('/api/sync-progress').catch(err => console.error("Sync failed:", err));
+
     const { data: novels, error } = await supabaseClient
         .from('novels')
         .select('*')
@@ -208,11 +210,15 @@ async function loadUserNovels() {
         return;
     }
 
+    const finalLink = (novel.last_chapter && novel.novel_hash)
+        ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
+        : novel.novel_url;
+
     // Map your Supabase data into your exact HTML structure
     gallery.innerHTML = novels.map(novel => `
         <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
             data-id="${novel.id}" 
-            data-link="${novel.novel_url}">
+            data-link="${finalLink}">
             
             <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
             
@@ -254,6 +260,8 @@ async function saveNovel() {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
 
+    console.log(data)
+
     const { error } = await supabaseClient
         .from('novels') // Make sure your table is named 'novels' in Supabase
         .insert([
@@ -261,7 +269,7 @@ async function saveNovel() {
                 title: title, 
                 novel_url: url, 
                 cover_url: cover, 
-                user_id: user.id 
+                user_id: user.id,
             }
         ]);
 

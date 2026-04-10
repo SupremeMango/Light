@@ -27,11 +27,20 @@ export default async function handler(req, res) {
         const tagMatches = [...html.matchAll(/class="tag-pill">([^<]+)<\/a>/g)];
         const tags = tagMatches.map(match => match[1].trim());
 
+        // 4. Extract Novel Hash from URL
+        let novel_hash = "";
+        if (cover) {
+            const hashMatch = cover.match(/\/covers\/([a-f0-9]+)\//);
+            novel_hash = hashMatch ? hashMatch[1] : "";
+        }
+
         res.status(200).json({ 
             title, 
             cover, 
             tags,
-            url 
+            url,
+            novel_hash,
+            last_chapter: "0001" // Default starting chapter count.
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
