@@ -210,15 +210,20 @@ async function loadUserNovels() {
         return;
     }
 
-    const finalLink = (novel.last_chapter && novel.novel_hash)
-        ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
-        : novel.novel_url;
-
     // Map your Supabase data into your exact HTML structure
+
+    // First, add finalLink to each novel
+    novels.forEach(novel => {
+        novel.finalLink = (novel.last_chapter && novel.novel_hash)
+            ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
+            : novel.novel_url;
+    });
+
+    // Then render the gallery
     gallery.innerHTML = novels.map(novel => `
         <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
             data-id="${novel.id}" 
-            data-link="${finalLink}">
+            data-link="${novel.finalLink}">
             
             <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
             
@@ -246,6 +251,43 @@ async function loadUserNovels() {
             </button>
         </div>
     `).join('');
+
+    // gallery.innerHTML = novels.map(novel => 
+    //     const finalLink = (novel.last_chapter && novel.novel_hash)
+    //         ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
+    //         : novel.novel_url;
+        
+    //     `
+    //     <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
+    //         data-id="${novel.id}" 
+    //         data-link="${finalLink}">
+            
+    //         <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
+            
+    //         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
+    //             <h3 class="text-white text-sm sm:text-base md:text-lg font-bold font-gog">
+    //                 ${novel.title}
+    //             </h3>
+
+    //             <p class="text-blue-300 text-xs font-dms mt-0.5 sm:mt-1 font-bold">
+    //                 New Novel
+    //             </p>
+
+    //             <p class="text-gray-300 text-xs font-dms mt-1 hidden sm:block">
+    //                 ${novel.tags && novel.tags.length > 0 
+    //                     ? novel.tags.slice(0, 2).join(' • ') 
+    //                     : 'No Tags'}
+    //             </p>
+    //         </div>
+            
+    //         <button onclick="toggleFavorite(this)" 
+    //                 class="heart-btn absolute top-4 right-4 z-20 p-2.5 rounded-full bg-white/20 backdrop-blur-md text-white transition-all duration-300 hover:bg-white/40">
+    //             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 pointer-events-none">
+    //                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+    //             </svg>
+    //         </button>
+    //     </div>
+    // `).join('');
 }
 
 loadUserNovels(); 
