@@ -48,7 +48,6 @@ export default async function handler(req, res) {
             url,
             description,
             novel_hash,
-            last_chapter,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
