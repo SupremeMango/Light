@@ -1,3 +1,5 @@
+// This only fetches the novel. It doesn't do anything other than that.
+
 export default async function handler(req, res) {
     const { url } = req.query;
 
@@ -30,9 +32,9 @@ export default async function handler(req, res) {
         // 4. Extract Novel Hash from URL
         let novel_hash = "";
         if (cover) {
-            const hashMatch = cover.match(/\/covers\/([a-f0-9]+)\//);
-            novel_hash = hashMatch ? hashMatch[1] : "";
-        }
+            const match = coverUrl.match(/\/covers\/([a-f0-9]{40})\/cover\.jpg/);
+            novel_hash = match ? match[1] : null; 
+        }        
 
         res.status(200).json({ 
             title, 
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
             tags,
             url,
             novel_hash,
-            last_chapter: "0001" // Default starting chapter count.
+            last_chapter,
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

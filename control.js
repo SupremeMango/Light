@@ -194,7 +194,7 @@ async function loadUserNovels() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    fetch('/api/sync-progress').catch(err => console.error("Sync failed:", err));
+    //fetch('/api/sync-progress').catch(err => console.error("Sync failed:", err));
 
     const { data: novels, error } = await supabaseClient
         .from('novels')
@@ -217,13 +217,16 @@ async function loadUserNovels() {
         novel.finalLink = (novel.last_chapter && novel.novel_hash)
             ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
             : novel.novel_url;
+        
+        novel.nvid = (novel.novel_hash)
     });
 
     // Then render the gallery
     gallery.innerHTML = novels.map(novel => `
         <div class="novel-card relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
             data-id="${novel.id}" 
-            data-link="${novel.finalLink}">
+            data-link="${novel.finalLink}"
+            data-uid="${novel.nvid}">
             
             <img src="${novel.cover_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://via.placeholder.com/300x400?text=No+Cover'">
             
@@ -252,8 +255,6 @@ async function loadUserNovels() {
         </div>
     `).join('');
 
-    // gallery.innerHTML = novels.map(novel => 
-    //     const finalLink = (novel.last_chapter && novel.novel_hash)
     //         ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
     //         : novel.novel_url;
         
@@ -297,54 +298,33 @@ function toggleModal(show) {
     document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
 }
 
-async function saveNovel() {
-    const url = document.getElementById('novel-url').value;
+// async function saveNovel() {
+//     const url = document.getElementById('novel-url').value;
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
+//     const { data: { user } } = await supabaseClient.auth.getUser();
 
-    console.log(data)
+//     console.log(data)
 
-    const { error } = await supabaseClient
-        .from('novels') // Make sure your table is named 'novels' in Supabase
-        .insert([
-            { 
-                title: title, 
-                novel_url: url, 
-                cover_url: cover, 
-                user_id: user.id,
-            }
-        ]);
+//     const { error } = await supabaseClient
+//         .from('novels') // Make sure your table is named 'novels' in Supabase
+//         .insert([
+//             { 
+//                 title: title, 
+//                 novel_url: url, 
+//                 cover_url: cover, 
+//                 user_id: user.id,
+//             }
+//         ]);
 
-    if (error) {
-        alert("Error saving: " + error.message);
-    } else {
-        toggleModal(false);
-        updateStatus("Success!", false);
-        toggleModal(false);
-        loadUserNovels(); // Refresh the gallery automatically!
-    }
-}
-window.saveNovel = saveNovel;
-window.toggleModal = toggleModal;
-
-
-function updateStatus(message, isVisible = true) {
-    const container = document.getElementById('status-container');
-    const text = document.getElementById('status-text');
-    const saveBtn = document.getElementById('save-btn');
-
-    if (isVisible) {
-        container.classList.remove('hidden');
-        text.innerText = message;
-        saveBtn.disabled = true; // Stop double-clicking
-    } else {
-        container.classList.add('hidden');
-        saveBtn.disabled = false;
-    }
-}
-
-// Small helper to wait
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+//     if (error) {
+//         alert("Error saving: " + error.message);
+//     } else {
+//         toggleModal(false);
+//         updateStatus("Success!", false);
+//         toggleModal(false);
+//         loadUserNovels(); // Refresh the gallery automatically!
+//     }
+// }
 
 async function saveNovel() {
     const novelUrl = document.getElementById('novel-url').value;
@@ -372,6 +352,9 @@ async function saveNovel() {
             ? scrapedData.tags 
             : [];
 
+        console.log("Scraped Data:", scrapedData)
+        console.log("Userdata", userData);
+
         updateStatus("Saving to Library...");
         const { error: dbError } = await supabaseClient
             .from('novels')
@@ -398,6 +381,31 @@ async function saveNovel() {
         setTimeout(() => updateStatus("", false), 3000);
     }
 }
+
+
+window.saveNovel = saveNovel;
+window.toggleModal = toggleModal;
+
+
+function updateStatus(message, isVisible = true) {
+    const container = document.getElementById('status-container');
+    const text = document.getElementById('status-text');
+    const saveBtn = document.getElementById('save-btn');
+
+    if (isVisible) {
+        container.classList.remove('hidden');
+        text.innerText = message;
+        saveBtn.disabled = true; // Stop double-clicking
+    } else {
+        container.classList.add('hidden');
+        saveBtn.disabled = false;
+    }
+}
+
+// Small helper to wait
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
 
 async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
