@@ -341,6 +341,8 @@ async function saveNovel() {
             : [];
 
         console.log("Scraped Data:", scrapedData)
+        console.log(scrapedData.novel_hash)
+        console.log(scrapedData.description)
 
 
         updateStatus("Saving to Library...");
