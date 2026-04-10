@@ -377,7 +377,7 @@ async function handleLogin() {
         errorEl.classList.remove('hidden');
     } else {
         document.getElementById('login-overlay').classList.add('hidden');
-        console.log("Success!");
+        loadUserNovels(); 
     }
 }
 
