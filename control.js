@@ -298,90 +298,90 @@ function toggleModal(show) {
     document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
 }
 
-async function saveNovel() {
-    const url = document.getElementById('novel-url').value;
-
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    console.log(data)
-
-    const { error } = await supabaseClient
-        .from('novels') // Make sure your table is named 'novels' in Supabase
-        .insert([
-            { 
-                title: title, 
-                novel_url: url, 
-                cover_url: cover, 
-                user_id: user.id,
-            }
-        ]);
-
-    if (error) {
-        alert("Error saving: " + error.message);
-    } else {
-        toggleModal(false);
-        updateStatus("Success!", false);
-        toggleModal(false);
-        loadUserNovels(); // Refresh the gallery automatically!
-    }
-}
-
 // async function saveNovel() {
-//     const novelUrl = document.getElementById('novel-url').value;
-//     if (!novelUrl) return;
+//     const url = document.getElementById('novel-url').value;
 
-//     try {
-//         updateStatus("Talking with Vercel...");
-//         const response = await fetch(`/api/fetch-novel?url=${encodeURIComponent(novelUrl)}`);
-//         const scrapedData = await response.json();
+//     const { data: { user } } = await supabaseClient.auth.getUser();
 
-//         if (scrapedData.error) throw new Error(scrapedData.error);
+//     console.log(data)
 
-//         // --- THE MISSING PIECE ---
-//         updateStatus("Identifying User...");
-//         const { data: userData, error: userError } = await supabaseClient.auth.getUser();
-        
-//         if (userError || !userData.user) {
-//             throw new Error("You must be logged in to save novels!");
-//         }
-        
-//         const userId = userData.user.id; // This is the 'user' variable you were missing!
-//         // -------------------------
+//     const { error } = await supabaseClient
+//         .from('novels') // Make sure your table is named 'novels' in Supabase
+//         .insert([
+//             { 
+//                 title: title, 
+//                 novel_url: url, 
+//                 cover_url: cover, 
+//                 user_id: user.id,
+//             }
+//         ]);
 
-//         const tagsToSave = scrapedData.tags && Array.isArray(scrapedData.tags) 
-//             ? scrapedData.tags 
-//             : [];
-
-//         console.log("Scraped Data:", scrapedData)
-//         console.log("Userdata", userData);
-
-
-//         updateStatus("Saving to Library...");
-//         const { error: dbError } = await supabaseClient
-//             .from('novels')
-//             .insert([{ 
-//                 title: scrapedData.title, 
-//                 novel_url: novelUrl, 
-//                 cover_url: scrapedData.cover, 
-//                 description: scrapedData.summary || "",
-//                 tags: tagsToSave,
-//                 user_id: userId // Use the ID we just fetched
-//             }]);
-
-//         if (dbError) throw dbError;
-
+//     if (error) {
+//         alert("Error saving: " + error.message);
+//     } else {
+//         toggleModal(false);
 //         updateStatus("Success!", false);
 //         toggleModal(false);
-//         // alert("Novel saved successfully!");
-//         loadUserNovels(); 
-
-
-//     } catch (err) {
-//         console.error(err);
-//         updateStatus("Error: " + err.message);
-//         setTimeout(() => updateStatus("", false), 3000);
+//         loadUserNovels(); // Refresh the gallery automatically!
 //     }
 // }
+
+async function saveNovel() {
+    const novelUrl = document.getElementById('novel-url').value;
+    if (!novelUrl) return;
+
+    try {
+        updateStatus("Talking with Vercel...");
+        const response = await fetch(`/api/fetch-novel?url=${encodeURIComponent(novelUrl)}`);
+        const scrapedData = await response.json();
+
+        if (scrapedData.error) throw new Error(scrapedData.error);
+
+        // --- THE MISSING PIECE ---
+        updateStatus("Identifying User...");
+        const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+        
+        if (userError || !userData.user) {
+            throw new Error("You must be logged in to save novels!");
+        }
+        
+        const userId = userData.user.id; // This is the 'user' variable you were missing!
+        // -------------------------
+
+        const tagsToSave = scrapedData.tags && Array.isArray(scrapedData.tags) 
+            ? scrapedData.tags 
+            : [];
+
+        console.log("Scraped Data:", scrapedData)
+        console.log("Userdata", userData);
+
+
+        updateStatus("Saving to Library...");
+        const { error: dbError } = await supabaseClient
+            .from('novels')
+            .insert([{ 
+                title: scrapedData.title, 
+                novel_url: novelUrl, 
+                cover_url: scrapedData.cover, 
+                description: scrapedData.summary || "",
+                tags: tagsToSave,
+                user_id: userId // Use the ID we just fetched
+            }]);
+
+        if (dbError) throw dbError;
+
+        updateStatus("Success!", false);
+        toggleModal(false);
+        // alert("Novel saved successfully!");
+        loadUserNovels(); 
+
+
+    } catch (err) {
+        console.error(err);
+        updateStatus("Error: " + err.message);
+        setTimeout(() => updateStatus("", false), 3000);
+    }
+}
 
 
 window.saveNovel = saveNovel;
