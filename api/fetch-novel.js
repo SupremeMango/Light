@@ -33,6 +33,9 @@ export default async function handler(req, res) {
             novel_hash = hashMatch ? hashMatch[1] : ""; 
         }
 
+        console.log(novel_hash)
+        console.log(cover)
+
         // 5. Description 
         const descriptionMatch = html.match(/<div class="description">([\s\S]*?)<\/div>/);
         const description = descriptionMatch 
