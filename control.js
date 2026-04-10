@@ -291,41 +291,12 @@ async function loadUserNovels() {
     // `).join('');
 }
 
-loadUserNovels(); 
 
 
 function toggleModal(show) {
     document.getElementById('add-novel-modal').classList.toggle('hidden', !show);
 }
 
-// Useless saveNovel(), delete later.
-// async function saveNovel() {
-//     const url = document.getElementById('novel-url').value;
-
-//     const { data: { user } } = await supabaseClient.auth.getUser();
-
-//     console.log(data)
-
-//     const { error } = await supabaseClient
-//         .from('novels') // Make sure your table is named 'novels' in Supabase
-//         .insert([
-//             { 
-//                 title: title, 
-//                 novel_url: url, 
-//                 cover_url: cover, 
-//                 user_id: user.id,
-//             }
-//         ]);
-
-//     if (error) {
-//         alert("Error saving: " + error.message);
-//     } else {
-//         toggleModal(false);
-//         updateStatus("Success!", false);
-//         toggleModal(false);
-//         loadUserNovels(); // Refresh the gallery automatically!
-//     }
-// }
 
 async function saveNovel() {
     const novelUrl = document.getElementById('novel-url').value;
@@ -373,7 +344,6 @@ async function saveNovel() {
 
         updateStatus("Success!", false);
         toggleModal(false);
-        // alert("Novel saved successfully!");
         loadUserNovels(); 
 
 
@@ -416,10 +386,6 @@ async function checkUser() {
         loadUserNovels(); // This is safe now
     }
 }
-
-checkUser();
-
-
 
 
 // Overlay!
