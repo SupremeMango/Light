@@ -28,8 +28,10 @@ export default async function handler(req, res) {
         const tags = tagMatches.map(match => match[1].trim());
 
         let novel_hash = "";
+        // Improved hash extraction
         if (cover) {
-            const hashMatch = cover.match(/\/covers\/([a-f0-9]{40})\//);
+            // This looks for the string after /covers/ until it hits the next /
+            const hashMatch = cover.match(/\/covers\/([^\/\s]+)/);
             novel_hash = hashMatch ? hashMatch[1] : ""; 
         }
 
