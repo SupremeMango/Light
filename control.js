@@ -4,10 +4,14 @@ const supabaseUrl = window.location.hostname === 'localhost'
     : 'https://vpxnqmcerpsveoykztjg.supabase.co'; // Or leave blank and let Vercel handle it
 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
-
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+const novel_list = []
+
+
 window.loadUserNovels = loadUserNovels; // Make it globally available.
+window.saveNovel = saveNovel;
+window.toggleModal = toggleModal;
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
     const overlay = document.getElementById('login-overlay');
@@ -19,6 +23,15 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
         overlay.classList.remove('hidden');
     }
 });
+
+// Check if already logged in
+async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        loadUserNovels(); // This is safe now
+    }
+}
 
 checkUser();
 
@@ -260,6 +273,16 @@ async function loadUserNovels() {
             const finalLink = (novel.last_chapter && novel.novel_hash)
                 ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
                 : novel.novel_url;
+            
+            if (!novel_list.find(n => n.id === novel.id)) {
+                novel_list.push({
+                    id: novel.id,
+                    hash: novel.novel_hash,
+                    cover_url: novel.cover_url,
+                    last_chapter: novel.last_chapter,
+                    title: novel.title // Good to have for searching later
+                });
+            }
 
             return `
                 <div class="novel-card animate-card-enter relative overflow-hidden rounded-2xl bg-gray-100 group cursor-pointer aspect-[3/4]" 
@@ -372,9 +395,67 @@ async function saveNovel() {
     }
 }
 
+async function sync_novels() {
+    try {
+        const response = await fetch('api/sync-progress');
+        if (!response.ok) throw new Error("Failed to fetch data");
 
-window.saveNovel = saveNovel;
-window.toggleModal = toggleModal;
+        const string = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(string, 'text/html');
+        
+        // 1. Convert all H2s to an array and find the one with our title
+        const headers = Array.from(doc.querySelectorAll('h2'));
+        const targetHeader = headers.find(h => h.textContent.includes("Recent progress"));
+
+        let chaptersArray = [];
+
+        if (targetHeader) {
+            // 2. Move to the parent <section> or search the next sibling for the .grid
+            const section = targetHeader.closest('section'); 
+            const grid = section.querySelector('.grid');
+
+            if (grid) {
+                // 3. Only pull items from WITHIN this specific grid
+                const items = grid.querySelectorAll('.item');
+                
+                chaptersArray = Array.from(items).map(item => {
+                    const hash = item.querySelector('.k')?.innerText.trim();
+                    const info = item.querySelector('.v')?.innerText.trim() || "";
+
+                    // Extract digits after "Chapter "
+                    const match = info.match(/Chapter\s+(\d+)/);
+                    const chapterDigits = match ? match[1] : "0";
+                    
+                    // Pad to 4 digits (e.g., 0001)
+                    const formattedChapter = chapterDigits.padStart(4, '0');
+
+                    return {
+                        novel_hash: hash,
+                        original_cid: info,
+                        formatted_cid: formattedChapter
+                    };
+                });
+            }
+        }
+
+        console.log(chaptersArray)
+
+    } catch (err) {
+        console.error("Sync Error:", err.message);
+    }
+}
+
+
+function auto_sync(){
+    const data = sync_novels()
+
+    console.log(data)
+    console.log(novel_list)
+}
+
+auto_sync()
+
 
 
 function updateStatus(message, isVisible = true) {
@@ -397,19 +478,10 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
 
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        document.getElementById('login-overlay').classList.add('hidden');
-        loadUserNovels(); // This is safe now
-    }
-}
+
 
 
 // Overlay!
-
-
-
 
 // 2. The Login Function
 async function handleLogin() {
@@ -434,4 +506,4 @@ async function handleLogin() {
 // 3. Make it visible to the HTML button
 window.handleLogin = handleLogin;
 
-// 4. Check if already logged in
+
