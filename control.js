@@ -6,6 +6,7 @@ const supabaseUrl = window.location.hostname === 'localhost'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+
 const novel_list = []
 
 
@@ -439,21 +440,65 @@ async function sync_novels() {
             }
         }
 
-        console.log(chaptersArray)
+        return chaptersArray;
 
     } catch (err) {
         console.error("Sync Error:", err.message);
     }
 }
 
+const data = [
+    {
+        novel_hash: '6e26208800d6e71c54952ff8308e75d5a0b2153e',
+        original_cid: 'Chapter 118 · 2026-04-11 16:51:27',
+        formatted_cid: '0118'
+    },
+    {
+        novel_hash: '9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8',
+        original_cid: 'Chapter 1 · 2026-04-10 15:03:39',
+        formatted_cid: '0001'
+    },
+    {
+        novel_hash: '63df510dc2b4721391e0b0b3801fd676562b68db',
+        original_cid: 'Chapter 19 · 2026-04-10 14:54:06',
+        formatted_cid: '0019'
+    },
+    {
+        novel_hash: '46b4e8efbf39422b3ba1608b6012890f6ee86c05',
+        original_cid: 'Chapter 9 · 2026-04-10 11:20:19',
+        formatted_cid: '0009'
+    },
+    {
+        novel_hash: '69d94906e301314ac322b83d5af51d5944f75079',
+        original_cid: 'Chapter 3001 · 2026-04-10 11:08:04',
+        formatted_cid: '3001'
+    },
+    {
+        novel_hash: '54eb0ed9362ddd630c82399b2b939bc684dfaac1',
+        original_cid: 'Chapter 21 · 2026-04-10 10:20:29',
+        formatted_cid: '0021'
+    }
+]
 
-function auto_sync(){
-    const data = sync_novels()
+// sync_novel() get the return data from sync-progress serverless function like temp data
+// Novel_list have finished when the website is loaded.
 
-    console.log(data)
-    console.log(novel_list)
+
+console.log(novel_list)
+
+async function auto_sync() {
+    try {
+        const data = await sync_novels(); 
+        
+        // data is synced_data from sync_novel
+        // call filter_hash(novel_list) here
+        console.log(data);
+        
+    } catch (error) {
+        console.error("Failed to fetch novels:", error);
+    }
 }
-
+// let's active after I built a loop
 auto_sync()
 
 
@@ -477,11 +522,7 @@ function updateStatus(message, isVisible = true) {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 
-
-
-
-
-// Overlay!
+// <--- Overlay! --> 
 
 // 2. The Login Function
 async function handleLogin() {
