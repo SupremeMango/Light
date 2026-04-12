@@ -573,7 +573,7 @@ async function filter_hash(synced_data, novel_list) {
 
 function local_update(item) {
     // 1. Grab the div using the id from the item
-    const div = document.getElementById(`${item.id}`);
+    const div = document.querySelector(`[data-id="${item.id}"]`);
     
     if (div) {
         // 2. Grab the existing data attributes
