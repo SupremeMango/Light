@@ -522,40 +522,6 @@ async function supa_update(table, payload) {
     }
 }
 
-// Tempoary to find why it is not working.
-const synced_data = [
-    {
-        novel_hash: '6e26208800d6e71c54952ff8308e75d5a0b2153e',
-        original_cid: 'Chapter 118 · 2026-04-11 16:51:27',
-        formatted_cid: '0118'
-    },
-    {
-        novel_hash: '9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8',
-        original_cid: 'Chapter 1 · 2026-04-10 15:03:39',
-        formatted_cid: '0001'
-    },
-    {
-        novel_hash: '63df510dc2b4721391e0b0b3801fd676562b68db',
-        original_cid: 'Chapter 19 · 2026-04-10 14:54:06',
-        formatted_cid: '0019'
-    },
-    {
-        novel_hash: '46b4e8efbf39422b3ba1608b6012890f6ee86c05',
-        original_cid: 'Chapter 9 · 2026-04-10 11:20:19',
-        formatted_cid: '0009'
-    },
-    {
-        novel_hash: '69d94906e301314ac322b83d5af51d5944f75079',
-        original_cid: 'Chapter 3001 · 2026-04-10 11:08:04',
-        formatted_cid: '3001'
-    },
-    {
-        novel_hash: '54eb0ed9362ddd630c82399b2b939bc684dfaac1',
-        original_cid: 'Chapter 21 · 2026-04-10 10:20:29',
-        formatted_cid: '0021'
-    }
-]
-
 async function filter_hash(synced_data, novel_list) {
     const novelMap = new Map(synced_data.map(item => [item.novel_hash, item]));
     const updatesNeeded = [];
@@ -647,12 +613,7 @@ async function auto_sync() {
     }
 }
 // let's active after I built a loop
-//auto_sync()
-
-filter_hash(synced_data, novel_list).then(updates => {
-    console.log("Process complete. Updates sent:", updates);
-    updates.forEach(item => local_update(item));
-});
+auto_sync()
 
 
 
