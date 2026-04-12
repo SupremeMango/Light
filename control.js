@@ -5,43 +5,70 @@
  */
 
 // After document load
-const supabaseUrl = window.location.hostname === 'localhost' 
-    ? 'http://127.0.0.1:5500/index/home%20test.html' 
-    : 'https://vpxnqmcerpsveoykztjg.supabase.co'; // Or leave blank and let Vercel handle it
+const supabaseUrl = 'https://vpxnqmcerpsveoykztjg.supabase.co'; // Or leave blank and let Vercel handle it
 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// Novel
-const novel_list = []
+// Novel Varialbes 
+var novel_list = [];
 const HASH_REGEX = /\/covers\/([^\/\s]+)/;
 
 
-window.loadUserNovels = loadUserNovels; // Make it globally available.
-window.saveNovel = saveNovel;
-window.toggleModal = toggleModal;
+// temp data acting as the data from sync_novels() // Delete later!
+const data = [
+    {
+        novel_hash: '6e26208800d6e71c54952ff8308e75d5a0b2153e',
+        original_cid: 'Chapter 118 · 2026-04-11 16:51:27',
+        formatted_cid: '0118'
+    },
+    {
+        novel_hash: '9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8',
+        original_cid: 'Chapter 1 · 2026-04-10 15:03:39',
+        formatted_cid: '0001'
+    },
+    {
+        novel_hash: '63df510dc2b4721391e0b0b3801fd676562b68db',
+        original_cid: 'Chapter 19 · 2026-04-10 14:54:06',
+        formatted_cid: '0019'
+    },
+    {
+        novel_hash: '46b4e8efbf39422b3ba1608b6012890f6ee86c05',
+        original_cid: 'Chapter 9 · 2026-04-10 11:20:19',
+        formatted_cid: '0009'
+    },
+    {
+        novel_hash: '69d94906e301314ac322b83d5af51d5944f75079',
+        original_cid: 'Chapter 3001 · 2026-04-10 11:08:04',
+        formatted_cid: '3001'
+    },
+    {
+        novel_hash: '54eb0ed9362ddd630c82399b2b939bc684dfaac1',
+        original_cid: 'Chapter 21 · 2026-04-10 10:20:29',
+        formatted_cid: '0021'
+    }
+]
+
+
+let currentUserId = null;
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
     const overlay = document.getElementById('login-overlay');
-    
-    if (session) {
-        overlay.classList.add('hidden');
-        loadUserNovels();
-    } else {
+
+    if (!session) {
         overlay.classList.remove('hidden');
+        currentUserId = null;
+        return;
+    }
+
+    overlay.classList.add('hidden');
+
+    const newUserId = session.user.id;
+        if (newUserId !== currentUserId) {
+        currentUserId = newUserId;
+        loadUserNovels();
     }
 });
-
-// Check if already logged in
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        document.getElementById('login-overlay').classList.add('hidden');
-        loadUserNovels(); // This is safe now
-    }
-}
-
-checkUser();
 
 
 // UI Control
@@ -342,11 +369,18 @@ async function loadUserNovels() {
             `;
         }).join('');
 
-        // 5. Final Render: Wait for the next paint frame to avoid the "Flash"
+        // console.log("Novel List is now officially ready:", novel_list);
+        const results = await filter_hash(synced_data, novel_list);
+
         requestAnimationFrame(() => {
             gallery.innerHTML = htmlContent;
-        });
 
+            results.forEach(item => local_update(item))
+        });
+        
+        
+
+        // 5. Final Render: Wait for the next paint frame to avoid the "Flash"
     } catch (err) {
         console.error("Gallery Load Error:", err);
         gallery.innerHTML = '<p class="text-red-400 text-center col-span-full">Something went wrong while loading.</p>';
@@ -416,58 +450,176 @@ async function saveNovel() {
     }
 }
 
-async function sync_novels() {
-    try {
-        const response = await fetch('api/sync-progress');
-        if (!response.ok) throw new Error("Failed to fetch data");
+// Sync is paused for now until the local_update actually works.
+// async function sync_novels() {
+//     try {
+//         const response = await fetch('api/sync-progress');
+//         if (!response.ok) throw new Error("Failed to fetch data");
 
-        const string = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(string, 'text/html');
+//         const string = await response.text();
+//         const parser = new DOMParser();
+//         const doc = parser.parseFromString(string, 'text/html');
         
-        // 1. Convert all H2s to an array and find the one with our title
-        const headers = Array.from(doc.querySelectorAll('h2'));
-        const targetHeader = headers.find(h => h.textContent.includes("Recent progress"));
+//         // 1. Convert all H2s to an array and find the one with our title
+//         const headers = Array.from(doc.querySelectorAll('h2'));
+//         const targetHeader = headers.find(h => h.textContent.includes("Recent progress"));
 
-        let chaptersArray = [];
+//         let chaptersArray = [];
 
-        if (targetHeader) {
-            // 2. Move to the parent <section> or search the next sibling for the .grid
-            const section = targetHeader.closest('section'); 
-            const grid = section.querySelector('.grid');
+//         if (targetHeader) {
+//             // 2. Move to the parent <section> or search the next sibling for the .grid
+//             const section = targetHeader.closest('section'); 
+//             const grid = section.querySelector('.grid');
 
-            if (grid) {
-                // 3. Only pull items from WITHIN this specific grid
-                const items = grid.querySelectorAll('.item');
+//             if (grid) {
+//                 // 3. Only pull items from WITHIN this specific grid
+//                 const items = grid.querySelectorAll('.item');
                 
-                chaptersArray = Array.from(items).map(item => {
-                    const hash = item.querySelector('.k')?.innerText.trim();
-                    const info = item.querySelector('.v')?.innerText.trim() || "";
+//                 chaptersArray = Array.from(items).map(item => {
+//                     const hash = item.querySelector('.k')?.innerText.trim();
+//                     const info = item.querySelector('.v')?.innerText.trim() || "";
 
-                    // Extract digits after "Chapter "
-                    const match = info.match(/Chapter\s+(\d+)/);
-                    const chapterDigits = match ? match[1] : "0";
+//                     // Extract digits after "Chapter "
+//                     const match = info.match(/Chapter\s+(\d+)/);
+//                     const chapterDigits = match ? match[1] : "0";
                     
-                    // Pad to 4 digits (e.g., 0001)
-                    const formattedChapter = chapterDigits.padStart(4, '0');
+//                     // Pad to 4 digits (e.g., 0001)
+//                     const formattedChapter = chapterDigits.padStart(4, '0');
 
-                    return {
-                        novel_hash: hash,
-                        original_cid: info,
-                        formatted_cid: formattedChapter
-                    };
-                });
-            }
-        }
+//                     return {
+//                         novel_hash: hash,
+//                         original_cid: info,
+//                         formatted_cid: formattedChapter
+//                     };
+//                 });
+//             }
+//         }
 
-        return chaptersArray;
+//         return chaptersArray;
 
-    } catch (err) {
-        console.error("Sync Error:", err.message);
+//     } catch (err) {
+//         console.error("Sync Error:", err.message);
+//     }
+// }
+
+
+// what this basically do is that after update, get results from filter_hash
+// Grab all the list in the list, edit the UI locally.
+function local_update(item) {
+    // 1. Grab the div using the id from the item
+    const div = document.querySelector(`div[data-id="${item.id}"]`);
+    
+    if (div) {
+        // 2. Grab the existing data attributes
+        const uid = div.getAttribute('data-uid');
+        
+        // 3. Construct the new link
+        const new_link = `https://fucknovelpia.com/chapter.php?hash=${uid}&ch=${item.last_chapter}`;
+        
+        // 4. Update the data-link attribute with the new URL
+        div.setAttribute('data-link', new_link);
+        
+        // Optional: If you want to log the result
+        // console.log(`Updated ID ${item.id} to: ${new_link}`);
+
+        // Updated! Sync special button?
+    } else {
+        console.warn(`Element with ID ${item.id} not found.`);
     }
 }
 
-const data = [
+
+// sync_novel() get the return data from sync-progress serverless function like temp data
+// Novel_list have finished when the website is loaded.
+
+
+async function supa_update(table, payload) {
+    if (payload.length === 0) return;
+
+    const { error } = await supabaseClient
+        .from(table)
+        .upsert(payload, { onConflict: 'id' });
+
+    if (error) {
+        console.error("Batch Update Error:", error);
+    } else {
+        console.log(`Successfully updated ${payload.length} records in ${table}.`);
+    }
+}
+
+async function filter_hash(synced_data, novel_list) {
+    const novelMap = new Map(synced_data.map(item => [item.novel_hash, item]));
+    const updatesNeeded = [];
+
+    for (const hero of novel_list) {
+        // 1. Resolve hash if missing from cover_url
+        let currentHash = hero.hash;
+        if (!currentHash && hero.cover_url) {
+            const match = hero.cover_url.match(HASH_REGEX);
+            if (match) currentHash = match[1];
+        }
+
+        // 2. Find matching data in synced_data
+        const syncInfo = novelMap.get(currentHash);
+
+        if (syncInfo) {
+            const latest_incoming_cid = Number(syncInfo.formatted_cid);
+            const current_local_cid = Number(hero.last_chapter || 0);
+
+            // console.log(latest_incoming_cid, current_local_cid, hero.title, hero.hash);
+            // console.log("<----->");
+
+            // CASE A: Normal Sync (Newer chapter found)
+            if (latest_incoming_cid > current_local_cid) {
+                updatesNeeded.push({ 
+                    id: hero.id, 
+                    last_chapter: syncInfo.formatted_cid,
+                    sync_debt: false 
+                });
+            } 
+            // CASE B: Sync Debt (Incoming is older/same as local)
+            // Note: Use <= if you want to flag chapters that are already synced
+            else if (latest_incoming_cid < current_local_cid) {
+                updatesNeeded.push({
+                    id: hero.id,
+                    last_chapter: hero.last_chapter,
+                    debt_cid: syncInfo.formatted_cid,
+                    sync_debt: true,
+                });
+            }
+        }
+    }
+
+    if (updatesNeeded.length > 0) {
+        // await supa_update('novels', updatesNeeded);
+    }
+
+    return updatesNeeded;
+}
+
+
+// So sync_novels() wait for the fetched synced data.
+// Auto_sync() waits for that data.
+// And it is passed through filter_hash -> creates updatesNeeded
+// It calls supa_update() but more of this later
+// It also calls local_update() which we update the local environment. <- currently getting stuck here.
+
+// async function auto_sync() {
+//     try {
+//         // const synced_data = await sync_novels(); let's pause this for now.
+        
+//         filter_hash(synced_data, novel_list).then(updates => {
+//             console.log("CL from inside of filter_hash", updates);
+//             // updates.forEach(item => local_update(item)); // maybe this is the reason why it is not wroking? no this is only the local_update
+//         });
+        
+//     } catch (error) {
+//         console.error("Failed to fetch novels:", error);
+//     }
+// }
+
+// Calling filter_hash
+const synced_data = [
     {
         novel_hash: '6e26208800d6e71c54952ff8308e75d5a0b2153e',
         original_cid: 'Chapter 118 · 2026-04-11 16:51:27',
@@ -476,7 +628,7 @@ const data = [
     {
         novel_hash: '9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8',
         original_cid: 'Chapter 1 · 2026-04-10 15:03:39',
-        formatted_cid: '0001'
+        formatted_cid: '0010'
     },
     {
         novel_hash: '63df510dc2b4721391e0b0b3801fd676562b68db',
@@ -500,118 +652,100 @@ const data = [
     }
 ]
 
-// sync_novel() get the return data from sync-progress serverless function like temp data
-// Novel_list have finished when the website is loaded.
-
-
-
-/**
- * Universal batch update
- */
-async function supa_update(table, payload) {
-    if (payload.length === 0) return;
-
-    const { error } = await supabaseClient
-        .from(table)
-        .upsert(payload, { onConflict: 'id' });
-
-    if (error) {
-        console.error("Batch Update Error:", error);
-    } else {
-        console.log(`Successfully updated ${payload.length} records in ${table}.`);
+// Will call novel_list for more focus.
+const novel_list_v2 = [
+    {
+        id: 33,
+        hash: '9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8',
+        cover_url: 'https://img.kfcok.net/covers/9d9dc216ed65ebfdd3cb98ca18b38a985a14c5c8/cover.jpg',
+        last_chapter: '0001',
+        title: 'The World after the Bad Ending'
+    },
+    {
+        id: 23,
+        hash: '63df510dc2b4721391e0b0b3801fd676562b68db',
+        cover_url: 'https://img.kfcok.net/covers/63df510dc2b4721391e0b0b3801fd676562b68db/cover.png',
+        last_chapter: '0001',
+        title: '[TS] The main character was attacked'
+    },
+    {
+        id: 22,
+        hash: '69d94906e301314ac322b83d5af51d5944f75079',
+        cover_url: 'https://img.kfcok.net/covers/69d94906e301314ac322b83d5af51d5944f75079/cover.jpg',
+        last_chapter: null,
+        title: 'Into the Creation'
+    },
+    {
+        id: 21,
+        hash: '9963c10aa67cae153d20d276338a0a3cbb389779',
+        cover_url: 'https://img.kfcok.net/covers/9963c10aa67cae153d20d276338a0a3cbb389779/cover.jpg',
+        last_chapter: null,
+        title: 'I became the youngest son of a romance novel'
+    },
+    {
+        id: 20,
+        hash: '36841c7c177a8f060aa30eecc0d0cf24a67798fd',
+        cover_url: 'https://img.kfcok.net/covers/36841c7c177a8f060aa30eecc0d0cf24a67798fd/cover.jpg',
+        last_chapter: null,
+        title: "I Was Mistaken as a Great War Commander (I've Been Mistaken for a Great War Strategist)"
+    },
+    {
+        id: 19,
+        hash: '38ac3108478690ddb2d9af1d31edbf41ebc8601e',
+        cover_url: 'https://img.kfcok.net/covers/38ac3108478690ddb2d9af1d31edbf41ebc8601e/cover.jpg',
+        last_chapter: null,
+        title: 'I Became a Servant Obsessed Over by Dragons'
+    },
+    {
+        id: 18,
+        hash: '79bfb22b6fc9422e98fa4dc20ba9be959718e164',
+        cover_url: 'https://img.kfcok.net/covers/79bfb22b6fc9422e98fa4dc20ba9be959718e164/cover.png',
+        last_chapter: null,
+        title: 'City of Witches'
+    },
+    {
+        id: 17,
+        hash: '8868ec061af4bda45f8fd3ef8c78c4efb020a4cd',
+        cover_url: 'https://bucket.novellist.co/novel-images/019761a5-…b88a-9a270bf48103-1749690095712.webp?t=1749690095',
+        last_chapter: null,
+        title: 'I Installed Mods in a Dark Fantasy'
+    },
+    {
+        id: 16,
+        hash: '57c1b172278d44dcf74b631efe059c999d31e255',
+        cover_url: 'https://img.kfcok.net/covers/57c1b172278d44dcf74b631efe059c999d31e255/cover.png',
+        last_chapter: null,
+        title: 'I Applied a Cheat Mode to a Murim Game'
+    },
+    {
+        id: 15,
+        hash: 'c91728bb4d8b1812cd637bce2ebeb933b9e5ae44',
+        cover_url: 'https://img.kfcok.net/covers/c91728bb4d8b1812cd637bce2ebeb933b9e5ae44/cover.jpg',
+        last_chapter: null,
+        title: 'Supporting Characters in the Game are Obsessed'
+    },
+    {
+        id: 14,
+        hash: '54eb0ed9362ddd630c82399b2b939bc684dfaac1',
+        cover_url: 'https://img.kfcok.net/covers/54eb0ed9362ddd630c82399b2b939bc684dfaac1/cover.jpg',
+        last_chapter: null,
+        title: 'I Became a Gallery Manager in Another World'
+    },
+    {
+        id: 13,
+        hash: 'e9e84618aa0cf56a318337dc51352f17cd0cce07',
+        cover_url: 'https://img.kfcok.net/covers/e9e84618aa0cf56a318337dc51352f17cd0cce07/cover.png',
+        last_chapter: null,
+        title: 'I Became A Playwright In Medieval Fantasy'
     }
-}
-
-async function filter_hash(synced_data, novel_list) {
-    const novelMap = new Map(synced_data.map(item => [item.novel_hash, item]));
-    const updatesNeeded = [];
-
-    for (const hero of novel_list) {
-        if (!hero.hash && hero.cover_url) {
-            const match = hero.cover_url.match(HASH_REGEX);
-            if (match) hero.hash = match[1];
-        }
-
-        const syncInfo = novelMap.get(hero.hash);
-
-        if (syncInfo) {
-            const latest_incoming_cid = Number(syncInfo.formatted_cid);
-            const current_local_cid = Number(hero.last_chapter || 0);
-
-            // CASE A: Normal Sync (Incoming is newer)
-            if (latest_incoming_cid > current_local_cid) {
-                updatesNeeded.push({ 
-                    id: hero.id, 
-                    last_chapter: syncInfo.formatted_cid,
-                    sync_debt: false 
-                });
-            } 
-            // CASE B: Sync Debt (Incoming is OLDER than Supabase)
-            else if (latest_incoming_cid < current_local_cid) {
-                updatesNeeded.push({
-                    id: hero.id,
-                    last_chapter: hero.last_chapter,
-                    sync_debt: true,
-                    debt_cid: syncInfo.formatted_cid
-                });
-            }
-        }
-    }
-
-    // 2. CRITICAL: Place the call BEFORE the return statement
-    if (updatesNeeded.length > 0) {
-        await supa_update('novels', updatesNeeded);
-    }
-
-    return updatesNeeded;
-}
+];
 
 
-// what this basically do is that after update, get results from filter_hash
-// Grab all the list in the list, edit the UI locally.
+
+// Auto sync is puased for now.
+// auto_sync() 
 
 
-function local_update(item) {
-    // 1. Grab the div using the id from the item
-    const div = document.querySelector(`[data-id="${item.id}"]`);
-    
-    if (div) {
-        // 2. Grab the existing data attributes
-        const uid = div.getAttribute('data-uid');
-        
-        // 3. Construct the new link
-        const new_link = `https://fucknovelpia.com/chapter.php?hash=${uid}&ch=${item.last_chapter}`;
-        
-        // 4. Update the data-link attribute with the new URL
-        div.setAttribute('data-link', new_link);
-        
-        // Optional: If you want to log the result
-        console.log(`Updated ID ${item.id} to: ${new_link}`);
-    } else {
-        console.warn(`Element with ID ${item.id} not found.`);
-    }
-}
-
-
-// Create a function which creates the hashes for the just by cover. done
-
-
-async function auto_sync() {
-    try {
-        const synced_data = await sync_novels(); 
-        console.log(synced_data)
-        
-        filter_hash(synced_data, novel_list).then(updates => {
-            console.log("Process complete. Updates sent:", updates);
-            updates.forEach(item => local_update(item));
-        });
-        
-    } catch (error) {
-        console.error("Failed to fetch novels:", error);
-    }
-}
-// let's active after I built a loop
-auto_sync()
 
 
 
@@ -652,11 +786,15 @@ async function handleLogin() {
         errorEl.classList.remove('hidden');
     } else {
         document.getElementById('login-overlay').classList.add('hidden');
-        loadUserNovels(); 
     }
 }
 
 // 3. Make it visible to the HTML button
+
+window.loadUserNovels = loadUserNovels;
+window.saveNovel = saveNovel;
+window.toggleModal = toggleModal;
 window.handleLogin = handleLogin;
+
 
 
