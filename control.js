@@ -441,6 +441,7 @@ async function sync_novels() {
         }
 
         return chaptersArray;
+        console.log(chaptersArray)
 
     } catch (err) {
         console.error("Sync Error:", err.message);
