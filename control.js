@@ -647,7 +647,12 @@ async function auto_sync() {
     }
 }
 // let's active after I built a loop
-auto_sync()
+//auto_sync()
+
+filter_hash(synced_data, novel_list).then(updates => {
+    console.log("Process complete. Updates sent:", updates);
+    updates.forEach(item => local_update(item));
+});
 
 
 
