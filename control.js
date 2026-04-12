@@ -566,11 +566,36 @@ async function filter_hash(synced_data, novel_list) {
     return updatesNeeded;
 }
 
-function edit(item){
+
+// what this basically do is that after update, get results from filter_hash
+// Grab all the list in the list, edit the UI locally.
+
+
+function local_update(item) {
+    // 1. Grab the div using the id from the item
     const div = document.getElementById(`${item.id}`);
+    
+    if (div) {
+        // 2. Grab the existing data attributes
+        const currentLink = div.getAttribute('data-link'); // e.g., .../novel/title
+        const uid = div.getAttribute('data-uid');
+        
+        // 3. Construct the new link
+        // Note: Using item.last_chapter as the 'ch' parameter based on your requirements
+        const new_link = `${currentLink}/chapter.php?hash=${uid}&ch=${item.last_chapter}`;
+        
+        // 4. Update the data-link attribute with the new URL
+        div.setAttribute('data-link', new_link);
+        
+        // Optional: If you want to log the result
+        console.log(`Updated ID ${item.id} to: ${new_link}`);
+    } else {
+        console.warn(`Element with ID ${item.id} not found.`);
+    }
 }
 
-// Create a function which creates the hashes for the just by cover.
+
+// Create a function which creates the hashes for the just by cover. done
 
 
 async function auto_sync() {
@@ -580,6 +605,7 @@ async function auto_sync() {
         
         filter_hash(synced_data, novel_list).then(updates => {
             console.log("Process complete. Updates sent:", updates);
+            updates.forEach(item => local_update(item));
         });
         
     } catch (error) {
