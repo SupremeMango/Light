@@ -12,7 +12,9 @@ const supabaseUrl = window.location.hostname === 'localhost'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+// Novel
 const novel_list = []
+const HASH_REGEX = /\/covers\/([^\/\s]+)/;
 
 
 window.loadUserNovels = loadUserNovels; // Make it globally available.
@@ -275,6 +277,19 @@ async function loadUserNovels() {
 
         // 4. Build the HTML String
         const htmlContent = novels.map((novel, index) => {
+            // Extract hash from cover
+            const c_url = novel.cover_url;
+            const match = c_url.match(HASH_REGEX);
+            var nv_hash = "";
+
+            // Check if a match was found and extract the first group
+            if (match && match[1]) {
+                nv_hash = match[1];
+            } else {
+                // Special case, another feature
+            }
+
+
             // Logic for final link
             const finalLink = (novel.last_chapter && novel.novel_hash)
                 ? `https://fucknovelpia.com/chapter.php?hash=${novel.novel_hash}&ch=${novel.last_chapter}`
@@ -283,7 +298,7 @@ async function loadUserNovels() {
             if (!novel_list.find(n => n.id === novel.id)) {
                 novel_list.push({
                     id: novel.id,
-                    hash: novel.novel_hash,
+                    hash: novel.novel_hash || nv_hash,
                     cover_url: novel.cover_url,
                     last_chapter: novel.last_chapter,
                     title: novel.title // Good to have for searching later
@@ -488,7 +503,7 @@ const data = [
 // sync_novel() get the return data from sync-progress serverless function like temp data
 // Novel_list have finished when the website is loaded.
 
-const HASH_REGEX = /\/covers\/([^\/\s]+)/;
+
 
 /**
  * Universal batch update
@@ -550,6 +565,12 @@ async function filter_hash(synced_data, novel_list) {
 
     return updatesNeeded;
 }
+
+function edit(item){
+    const div = document.getElementById(`${item.id}`);
+}
+
+// Create a function which creates the hashes for the just by cover.
 
 
 async function auto_sync() {
