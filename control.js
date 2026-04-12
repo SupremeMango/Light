@@ -577,12 +577,10 @@ function local_update(item) {
     
     if (div) {
         // 2. Grab the existing data attributes
-        const currentLink = div.getAttribute('data-link'); // e.g., .../novel/title
         const uid = div.getAttribute('data-uid');
         
         // 3. Construct the new link
-        // Note: Using item.last_chapter as the 'ch' parameter based on your requirements
-        const new_link = `${currentLink}/chapter.php?hash=${uid}&ch=${item.last_chapter}`;
+        const new_link = `https://fucknovelpia.com/chapter.php?hash=${uid}&ch=${item.last_chapter}`;
         
         // 4. Update the data-link attribute with the new URL
         div.setAttribute('data-link', new_link);
