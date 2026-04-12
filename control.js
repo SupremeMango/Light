@@ -310,7 +310,7 @@ async function loadUserNovels() {
                     style="animation-delay: ${index * 60}ms;" 
                     data-id="${novel.id}" 
                     data-link="${finalLink}"
-                    data-uid="${novel.novel_hash || ''}">
+                    data-uid="${novel.novel_hash || nv_hash}">
                     
                     <img src="${novel.cover_url}" 
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
