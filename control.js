@@ -555,6 +555,7 @@ async function filter_hash(synced_data, novel_list) {
 async function auto_sync() {
     try {
         const synced_data = await sync_novels(); 
+        console.log(synced_data)
         
         filter_hash(synced_data, novel_list).then(updates => {
             console.log("Process complete. Updates sent:", updates);
