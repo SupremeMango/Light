@@ -1,3 +1,9 @@
+/**
+ * A universal function to batch update records in Supabase.
+ * @param {string} table - The name of the table (e.g., 'novels')
+ * @param {Array} payload - Array of objects containing the ID and the fields to update
+ */
+
 // After document load
 const supabaseUrl = window.location.hostname === 'localhost' 
     ? 'http://127.0.0.1:5500/index/home%20test.html' 
@@ -5,7 +11,6 @@ const supabaseUrl = window.location.hostname === 'localhost'
 
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZweG5xbWNlcnBzdmVveWt6dGpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNzE1NTIsImV4cCI6MjA5MDk0NzU1Mn0.BMwGIkKIHqnCMsV6YdtZzxBeIy6vJuPFgUPrMuOS56A';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
 
 const novel_list = []
 
@@ -441,7 +446,6 @@ async function sync_novels() {
         }
 
         return chaptersArray;
-        console.log(chaptersArray)
 
     } catch (err) {
         console.error("Sync Error:", err.message);
@@ -484,16 +488,77 @@ const data = [
 // sync_novel() get the return data from sync-progress serverless function like temp data
 // Novel_list have finished when the website is loaded.
 
+const HASH_REGEX = /\/covers\/([^\/\s]+)/;
 
-console.log(novel_list)
+/**
+ * Universal batch update
+ */
+async function supa_update(table, payload) {
+    if (payload.length === 0) return;
+
+    const { error } = await supabaseClient
+        .from(table)
+        .upsert(payload, { onConflict: 'id' });
+
+    if (error) {
+        console.error("Batch Update Error:", error);
+    } else {
+        console.log(`Successfully updated ${payload.length} records in ${table}.`);
+    }
+}
+
+async function filter_hash(synced_data, novel_list) {
+    const novelMap = new Map(synced_data.map(item => [item.novel_hash, item]));
+    const updatesNeeded = [];
+
+    for (const hero of novel_list) {
+        if (!hero.hash && hero.cover_url) {
+            const match = hero.cover_url.match(HASH_REGEX);
+            if (match) hero.hash = match[1];
+        }
+
+        const syncInfo = novelMap.get(hero.hash);
+
+        if (syncInfo) {
+            const latest_incoming_cid = Number(syncInfo.formatted_cid);
+            const current_local_cid = Number(hero.last_chapter || 0);
+
+            // CASE A: Normal Sync (Incoming is newer)
+            if (latest_incoming_cid > current_local_cid) {
+                updatesNeeded.push({ 
+                    id: hero.id, 
+                    last_chapter: syncInfo.formatted_cid,
+                    sync_debt: false 
+                });
+            } 
+            // CASE B: Sync Debt (Incoming is OLDER than Supabase)
+            else if (latest_incoming_cid < current_local_cid) {
+                updatesNeeded.push({
+                    id: hero.id,
+                    last_chapter: hero.last_chapter,
+                    sync_debt: true,
+                    debt_cid: syncInfo.formatted_cid
+                });
+            }
+        }
+    }
+
+    // 2. CRITICAL: Place the call BEFORE the return statement
+    if (updatesNeeded.length > 0) {
+        await supa_update('novels', updatesNeeded);
+    }
+
+    return updatesNeeded;
+}
+
 
 async function auto_sync() {
     try {
-        const data = await sync_novels(); 
+        const synced_data = await sync_novels(); 
         
-        // data is synced_data from sync_novel
-        // call filter_hash(novel_list) here
-        console.log(data);
+        filter_hash(synced_data, novel_list).then(updates => {
+            console.log("Process complete. Updates sent:", updates);
+        });
         
     } catch (error) {
         console.error("Failed to fetch novels:", error);
